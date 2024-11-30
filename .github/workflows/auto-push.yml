@@ -1,0 +1,36 @@
+name: Scheduled Push
+
+on:
+  schedule:
+    # This runs at 00:00 UTC every day
+    # You can modify this using cron syntax
+    - cron: '0 0 * * *'
+  
+  # Also allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  auto-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+        
+      - name: Configure Git
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add .
+          git status --porcelain
+          echo "::set-output name=changes::$(git status --porcelain | wc -l)"
+          
+      - name: Commit and push if changes exist
+        if: steps.check_changes.outputs.changes > 0
+        run: |
+          git commit -m "Auto-push: Scheduled update $(date)"
+          git push
